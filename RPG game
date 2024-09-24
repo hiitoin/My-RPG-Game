@@ -1,0 +1,603 @@
+@echo off
+title RPG-By:hiitoin
+set ADM=FALSE
+set PASSWORD=echo
+call Settings.bat
+:MENU
+cls
+echo ======================
+echo    My RPG Game
+echo ======================
+echo     1. New Game
+echo     2. Load Game
+echo     3. Settings
+echo     4. Quit
+echo ======================
+choice /c 1234 /n >nul
+set MSG= 
+if %ERRORLEVEL%==1 (
+set MSG=New Game Created.
+goto NEWGAME
+)
+if %ERRORLEVEL%==2 (
+call Save.bat
+set MSG=Game Loaded.
+goto CHOICE
+)
+if %ERRORLEVEL%==3 goto SETTINGS
+if %ERRORLEVEL%==4 exit
+goto MENU
+:NEWGAME
+cls
+echo ==================
+echo What is your name?
+echo ==================
+set /p NAME=
+::HERO STATS
+set MHP=35
+set HP=%MHP%
+set DMG=4
+set LVL=1
+set EXP=0
+set MEXP=80
+set GOLD=125
+set DEF=0
+set BLOCKt=FALSE
+set MS=0
+set WEP=0
+set ARM=0
+set HPU=0
+set BOSS1=FALSE
+set BOSS2=FALSE
+set BOSS=FALSE
+:CHOICE
+if %BOSS1%==TRUE call :BOSSchk
+cls
+ 
+if %ADM%==TRUE (
+                echo ======================        ADMIN:P
+) else          echo ======================
+				echo  Who will you battle?
+                echo ======================
+                echo       ( W.Save )               /$$$\
+                echo.                           I===========I
+                echo  1. Wolf        Lvl.1      I    (R)    I
+                echo  2. Spider      Lvl.2      I   Store   I
+                echo  3. Goblin      Lvl.3      I===========I
+                echo  4. Knight      Lvl.4
+				echo  5. Mech. Guard Lvl.6
+                echo  6. Dragon      Lvl.10
+ if %MS% GEQ 50 echo  7. Harpies     Lvl.15
+if %MS% GEQ 100 echo  8. Hydra       Lvl.20
+if %BOSS%==TRUE echo  9. Sephiroth   Lvl.??
+                echo ======================
+                echo  (Q)Stats     Menu(E)
+                echo ======================
+                echo ::%MSG%
+choice /c 123456789qwerp /n >nul
+set HP=%MHP%
+set MESSAGE= 
+if %ERRORLEVEL%==1 call :WOLFs
+if %ERRORLEVEL%==2 call :SPIDERs
+if %ERRORLEVEL%==3 call :GOBLINs
+if %ERRORLEVEL%==4 call :KNIGHTs
+if %ERRORLEVEL%==5 call :MECHs
+if %ERRORLEVEL%==6 call :DRAGONs
+if %ERRORLEVEL%==11 (
+call :SAVE
+set MSG=Game Saved.
+goto CHOICE
+)
+if %ERRORLEVEL%==12 goto MENU
+if %ERRORLEVEL%==10 (
+call :STATS
+goto CHOICE
+)
+if %ERRORLEVEL%==13 (
+call :STORE
+goto CHOICE
+)
+if %ERRORLEVEL%==7 goto CHECK10
+if %ERRORLEVEL%==8 goto CHECK11
+if %ERRORLEVEL%==9 goto CHECK12
+if %ERRORLEVEL%==14 goto ADMIN
+set MSG= 
+:SCREEN
+cls
+if %BLOCKt%==TRUE (
+ set BLOCKt==FALSE
+ set /a DEF-=%LVL%
+)
+if %HP% LEQ 0 goto GAMEOVER
+echo ---- Your Turn ----
+echo ===================
+echo %NAME% Lvl:%LVL%
+echo ===================
+echo Exp:%EXP%
+echo %HP% / %MHP%
+echo Damage:%DMG%
+echo Defence:%DEF%
+echo ===================        
+echo                           I==============I
+echo                           I   1.Attack   I
+echo         Vs                I   2.Block    I
+echo                           I   3.Run      I
+echo                           I==============I
+echo ===================
+echo %eNAME% Lvl:%eLVL%
+echo ===================
+echo %eHP% / %eMHP%
+echo Damage:%eDMG%
+echo ===================
+echo.
+echo ::%MESSAGE%
+choice /c 123 /n >nul
+if %ERRORLEVEL%==1 call :ATTACK
+if %ERRORLEVEL%==2 (
+ set /a DEF+=%LVL%
+ set /a HP+=%LVL%
+ set BLOCKt=TRUE
+ set MESSAGE=You prepare to block and heal for %LVL%.
+)
+if %ERRORLEVEL%==3 (
+ set MESSAGE=Your escape failed!
+ call :RUN
+)
+:eSCREEN
+cls
+if %HP% GTR %MHP% set HP=%MHP%
+if %eHP% LEQ 0 goto VICTORY
+echo.
+echo ===================
+echo %NAME% Lvl:%LVL%
+echo ===================
+echo Exp:%EXP%
+echo %HP% / %MHP%
+echo Damage:%DMG%
+echo Defence:%DEF%
+echo ===================
+echo.
+echo.
+echo         Vs                
+echo.                          
+echo --- Their Turn ----
+echo ===================
+echo %eNAME% Lvl:%eLVL%
+echo ===================
+echo %eHP% / %eMHP%
+echo Damage:%eDMG%
+echo ===================
+echo.
+echo ::%MESSAGE%
+ping localhost -n 3 >nul
+:eATTACK
+::DD is DAMAGE DEALT
+set R=%RANDOM%
+set /a R=%RANDOM% * 100 / 32768 + 1
+if %R% LEQ 8 (
+ set MESSAGE=%eNAME% missed!
+ goto SCREEN
+)
+if %R% GTR 92 (
+ set DD=%eCRIT%
+ set /a HP-=%eADMG%
+ set M=2
+) else (
+ set DD=%eDMG%
+ set M=1
+)
+set /a eADMG=%DD%-%DEF%
+if %eADMG% LEQ 0 set eADMG=1
+set /a HP-=%eADMG%
+if %M%==1 set MESSAGE=%eNAME% did %eADMG% dmg!
+if %M%==2 set MESSAGE=%eNAME% critically strikes for %eADMG% dmg!
+goto SCREEN
+:ATTACK
+set /a CRIT=%DMG%*2
+set R=%RANDOM%
+set /a R=%RANDOM% * 100 / 32768 + 1
+if %R% LEQ 8 ( 
+ set MESSAGE=You missed!
+ goto eSCREEN
+)
+if %R% GTR 92 (
+ set DD=%CRIT%
+ set M=2
+) else (
+ set DD=%DMG%
+ set M=1
+)
+set /a eHP-=%DD%
+if %M%==1 set MESSAGE=You did %DMG% dmg!
+if %M%==2 set MESSAGE=You critically strike for %CRIT% dmg!
+goto:eof
+:RUN
+set RUN=%LVL%
+set R=%RANDOM%
+set /a R=%RANDOM% * 100 / 32768 + 1
+if %R% GEQ %eRUN% goto ESCAPE
+goto eSCREEN
+:VICTORY
+set BONUSg=0
+set BONUSe=0
+call :LOOT
+set /a Ae=%eEXP%+%BONUSe%
+set /a Ag=%eGOLD%+%BONUSg%
+set /a GOLD+=%Ag%
+set /a EXP+=%Ae%
+set /a MS+=1
+cls
+echo ==================
+echo      Victory!
+echo ==================
+echo  Gained %Ae% Exp
+echo  Gained %Ag% Gold
+echo ==================
+call :LVLCHECK
+pause >nul
+goto CHOICE
+:LVLCHECK
+set LVLmark=20*%LVL%
+if %EXP% GEQ %MEXP% (
+ set /a EXP-=%MEXP%
+ set /a MEXP+=50+%LVLmark%
+ set /a LVL+=1
+ set /a MHP+=15
+ set /a DMG+=1
+)
+if %EXP% GEQ %MEXP% goto LVLCHECK
+goto:eof
+:ESCAPE
+cls
+echo ==================
+echo      Escaped!
+echo ==================
+echo   No rewards for
+echo      running.
+echo ==================
+pause >nul
+goto CHOICE
+:GAMEOVER
+cls
+echo ==================
+echo     Game Over
+echo ==================
+echo    Your health
+echo     reached 0 
+echo ==================
+pause >nul
+goto MENU
+::Monsters
+:WOLFs
+set eNAME=Wolf
+set eMHP=26
+set eHP=%eMHP%
+set eDMG=4
+set eCRIT=8
+set eLVL=1
+set eGOLD=25
+set eEXP=20
+set eRUN=65
+goto:eof
+:SPIDERs
+set eNAME=Spider
+set eMHP=52
+set eHP=%eMHP%
+set eDMG=6
+set eCRIT=12
+set eLVL=2
+set eGOLD=35
+set eEXP=35
+set eRUN=70
+goto:eof
+:GOBLINs
+set eNAME=Goblin
+set eMHP=78
+set eHP=%eMHP%
+set eDMG=8
+set eCRIT=12
+set eLVL=3
+set eGOLD=45
+set eEXP=40
+set eRUN=75
+goto:eof
+:KNIGHTs
+set eNAME=Knight
+set eMHP=115
+set eHP=%eMHP%
+set eDMG=10
+set eCRIT=20
+set eLVL=4
+set eGOLD=80
+set eEXP=75
+set eRUN=75
+goto:eof
+:MECHs
+set eNAME=Mech. Guard
+set eMHP=160
+set eHP=%eMHP%
+set eDMG=14
+set eCRIT=28
+set eLVL=6
+set eGOLD=120
+set eEXP=125
+set eRUN=75
+goto:eof
+:DRAGONs
+set eNAME=Dragon
+set eMHP=350
+set eHP=%eMHP%
+set eDMG=20
+set eCRIT=40
+set eLVL=10
+set eGOLD=1500
+set eEXP=1500
+set eRUN=99
+goto:eof
+::EPICS
+:HARPs
+set eNAME1=Harpy Sister
+set eNAME2=Harpy Brother
+set eMHP1=650
+set eMHP2=850
+set eHP1=%eMHP1%
+set eHP2=%eMHP2%
+set eDMG1=18
+set eCRIT1=36
+set eDMG2=8
+set eCRIT2=16
+set eLVL=15
+set eGOLD=10000
+set eEXP=2500
+set eRUN=99
+goto:eof
+:HYDRAs
+set eNAME1=Left Head
+set eNAME2=Center Head
+set eNAME3=Right Head
+set eMHP1=1000
+set eMHP2=1500
+set eMHP3=1000
+set eHP1=%eMHP1%
+set eHP2=%eMHP2%
+set eHP3=%eMHP2%
+set eDMG1=15
+set eDMG2=25
+set eDMG3=15
+set eCRIT1=30
+set eCRIT2=50
+set eLVL=20
+set eGOLD=25000
+set eEXP=5000
+set eRUN=99
+:OWAs
+set eNAME=Sephiroth
+set eMHP=9999
+set eHP=%eMHP%
+set eDMG=55
+set eCRIT=110
+set eLVL=??
+set eGOLD=175000
+set eEXP=10000
+set eRUN=100
+goto:eof
+:SAVE
+(
+echo set NAME=%NAME%
+echo set MHP=%MHP%
+echo set HP=%MHP%
+echo set DMG=%DMG%
+echo set LVL=%LVL%
+echo set EXP=%EXP%
+echo set MEXP=%MEXP%
+echo set GOLD=%GOLD%
+echo set DEF=%DEF%
+echo set MS=%MS%
+echo set WEP=%WEP%
+echo set ARM=%ARM%
+echo set HPU=%HPU%
+echo set BLOCKt=FALSE
+echo set BOSS1=%BOSS1%
+echo set BOSS2=%BOSS2%
+echo set BOSS=%BOSS%
+) > Save.bat
+goto:eof
+:LOOT
+set R=%RANDOM%
+set /a RANg=%RANDOM% * 100 / 32768 + 1
+set R=%RANDOM%
+set /a RANe=%RANDOM% * 100 / 32768 + 1
+if %RANg% GTR 85 set BONUSg=150
+if %RANe% GTR 85 set BONUSe=50
+goto:eof
+:STATS
+cls
+echo =======================
+echo  %NAME% Lvl.%LVL%
+echo =======================
+echo  EXP:%EXP%/%MEXP%
+echo.
+echo   HP:%HP%/%MHP%  
+echo  DMG:%DMG%
+echo  DEF:%DEF%
+echo.
+echo  Gold:%GOLD%g
+echo  Enemies Slain:%MS%
+echo =======================
+echo  Any Button To Go Back
+echo =======================
+pause >nul
+goto:eof
+:STORE
+cls
+set /a WEPg=(%WEP%*125)+125
+set /a ARMg=(%ARM%*125)+125
+set /a HPUg=(%HPU%*125)+125
+echo =======================
+echo          STORE
+echo =======================
+echo.
+echo  Gold:%GOLD%g
+echo.
+echo  1.Weapon Upgrade: %WEP%
+echo     %WEPg%g
+echo.  
+echo  2.Armour Upgrade: %ARM%
+echo     %ARMg%g
+echo.
+echo  3.Health Upgrade: %HPU%
+echo     %HPUg%g
+echo.
+echo =======================
+echo  (W)     Back      (W)        
+echo =======================
+choice /c 123w /n >nul
+if %ERRORLEVEL%==4 goto:eof
+if %ERRORLEVEL%==1 (
+ set PRICE=%WEPg%
+ set PRICEn=WEP
+ set MOD=DMG
+ set AMOUNT=1
+)
+if %ERRORLEVEL%==2 (
+ set PRICE=%ARMg%
+ set PRICEn=ARM
+ set MOD=DEF
+ set AMOUNT=1
+)
+if %ERRORLEVEL%==3 (
+ set PRICE=%HPUg%
+ set PRICEn=HPU
+ set MOD=MHP
+ set AMOUNT=5
+)
+if %PRICE% GTR %GOLD% goto STORE
+set /a GOLD-=%PRICE%
+set /a %PRICEn%+=1
+set /a %MOD%+=%AMOUNT%
+goto STORE
+ 
+ 
+:CHECK10
+if %MS% GEQ 50 (
+call :HARPs
+goto HARPb
+)
+goto CHOICE
+:CHECK11
+if %MS% GEQ 100 (
+call :HYDRAs
+goto HYDRAb
+)
+goto CHOICE
+:CHECK12
+if %BOSS% EQU TRUE (
+call :OWAs
+goto OWAb
+)
+goto CHOICE
+:BOSSchk
+if %BOSS2%==TRUE set BOSS=TRUE
+goto:eof
+:SETTINGS
+cls
+echo ======================
+echo        Settings
+echo ======================
+echo.
+echo     1. Admin:%ADM%
+echo.
+echo ======================
+echo  (W)     Back     (W)        
+echo ======================
+choice /c 1234w /n >nul
+if %ERRORLEVEL%==1 (
+ set TF=%ADM%
+ set ST=ADM
+)
+if %ERRORLEVEL%==5 goto MENU
+if %TF%==FALSE (set %ST%=TRUE) else set %ST%=FALSE
+(
+echo set ADM=%ADM%
+) > Settings.bat
+goto SETTINGS
+:ADMIN
+if %ADM%==FALSE goto CHOICE
+cls
+echo ==========================
+echo           Admin
+echo ==========================
+echo.
+echo   Please Input Password:
+echo.
+echo ==========================
+set /p INPUT=::
+if %INPUT% NEQ %PASSWORD% (
+ set MSG=Incorrect Password.
+ goto CHOICE
+)
+:ADMIN2
+cls
+echo ==========================
+echo           Admin
+echo ==========================
+echo.
+echo What would you like to do?
+echo.
+echo   1.MORE HP
+echo.
+echo   2.MORE GOLD
+echo.     
+echo   3.MORE DMG 
+echo.  
+echo   4.MORE DEF
+echo.
+echo   5.LEVEL UP    
+echo.
+echo ==========================
+echo  (W)       Back       (W)        
+echo ==========================
+choice /c 12345w6 /n >nul
+if %ERRORLEVEL%==1 set MOD=MHP
+if %ERRORLEVEL%==2 set MOD=GOLD
+if %ERRORLEVEL%==3 set MOD=DMG
+if %ERRORLEVEL%==4 set MOD=DEF
+if %ERRORLEVEL%==5 (
+ set MOD=LVLs
+ goto LVLr
+)
+if %ERRORLEVEL%==6 goto CHOICE
+cls
+echo ==========================
+echo           Admin
+echo ==========================
+echo.
+echo       Set value for:
+echo.         
+echo          "%MOD%"
+echo.
+echo ==========================
+set /p INPUT=::
+set %MOD%=%INPUT%
+goto ADMIN2
+:LVLr
+cls
+echo ==========================
+echo           Admin
+echo ==========================
+echo.
+echo    How many times would
+echo     you like to level:
+echo.         
+echo           "LVL"
+echo.
+echo ==========================
+set /p INPUT=::
+if %INPUT%==0 goto ADMIN2
+set counter=0
+:LVLUPr
+set /a counter+=1
+set /a EXP=%MEXP%
+call :LVLCHECK
+if %counter%==%INPUT% goto ADMIN2
+goto LVLUPr
