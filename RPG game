@@ -1,4 +1,5 @@
 @echo off
+color A
 title RPG-By:hiitoin
 set ADM=FALSE
 set PASSWORD=echo
